@@ -20,7 +20,9 @@ npm install
 
 ```bash
 nano data.txt
+```
 
+```
 nano proxy.txt
 ```
 4. Run Bot
