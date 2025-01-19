@@ -9,7 +9,7 @@ git clone https://github.com/SRCryptoBoyz/Depined-autobot.git
 ```
 
 ```
-cd Depined-Auto-Bot
+cd Depined-autobot
 ```
 2. Install dependencies
 
