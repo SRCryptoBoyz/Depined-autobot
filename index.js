@@ -6,12 +6,12 @@ import Table from 'cli-table3';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import figlet from 'figlet';
+import readline from 'readline';
 
 const BASE_URL = 'https://api.depined.org/api';
-const displayBanner = () => {
 
-  console.log(chalk.green(
-▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+const displayBanner = () => {
+  console.log(chalk.magenta(figlet.textSync('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   
 ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
  ██████╗ ██╗ ██████╗                  ███████╗     
@@ -24,7 +24,7 @@ const displayBanner = () => {
 ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   
 ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-));
+', { horizontalLayout: 'default' })));
 };
 
 // Format timestamps
@@ -58,9 +58,7 @@ const createStatsTable = (accounts) => {
   return table;
 };
 
-
 // Update log success
-
 const logSuccess = (accountId, message, pointsToday, totalPoints, username, email) => {
   console.log(
     chalk.green(`[${getTimestamp()}] Account ${accountId}: ${message}`) +
@@ -76,6 +74,7 @@ const parseProxyString = (proxyString) => {
   try {
     const [protocol, rest] = proxyString.trim().split('://');
     if (!rest) throw new Error('Invalid proxy format');
+
     let [credentials, hostPort] = rest.split('@');
     if (!hostPort) {
       hostPort = credentials;
@@ -84,6 +83,7 @@ const parseProxyString = (proxyString) => {
 
     const [host, port] = hostPort.split(':');
     if (!host || !port) throw new Error('Invalid proxy host/port');
+
     let auth = null;
     if (credentials) {
       const [username, password] = credentials.split(':');
@@ -99,7 +99,7 @@ const parseProxyString = (proxyString) => {
       auth
     };
   } catch (error) {
-   throw new Error(`Failed to parse proxy string: ${proxyString}`);
+    throw new Error(`Failed to parse proxy string: ${proxyString}`);
   }
 };
 
@@ -184,7 +184,6 @@ const getUserProfile = async (token, proxyConfig = null) => {
       username: data.profile.username || '-',
       email: data.user_details.email || '-'
     };
-
   } catch (error) {
     throw error;
   }
@@ -224,7 +223,7 @@ const ping = async (token, proxyConfig = null) => {
 };
 
 // Read and validate input files
-const readInputFiles = async () => {
+const readInputFiles = async (useProxy) => {
   try {
     const tokenData = await fs.readFile('data.txt', 'utf8');
     const tokens = tokenData.split('\n')
@@ -236,14 +235,16 @@ const readInputFiles = async () => {
     }
 
     let proxies = [];
-    try {
-      const proxyData = await fs.readFile('proxy.txt', 'utf8');
-      proxies = proxyData.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-        .map(proxyString => parseProxyString(proxyString));
-    } catch (error) {
-      console.log(chalk.yellow('No proxy.txt found or error reading proxies. Running without proxies.'));
+    if (useProxy) {
+      try {
+        const proxyData = await fs.readFile('proxy.txt', 'utf8');
+        proxies = proxyData.split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0)
+          .map(proxyString => parseProxyString(proxyString));
+      } catch (error) {
+        console.log(chalk.yellow('No proxy.txt found or error reading proxies. Running without proxies.'));
+      }
     }
 
     return { tokens, proxies };
@@ -252,15 +253,47 @@ const readInputFiles = async () => {
   }
 };
 
+// Function to wait for user to press any key
+const waitForAnyKey = async (message) => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
 
+  console.log(chalk.yellow(message));
+  return new Promise((resolve) => {
+    rl.question('Press any key to continue...', () => {
+      rl.close();
+      resolve();
+    });
+  });
+};
 
 // Main function
 const main = async () => {
   displayBanner(); // Tampilkan banner saat aplikasi dimulai
- 
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  const useProxy = await new Promise((resolve) => {
+    rl.question('Do you want to use proxy? (y/n): ', (answer) => {
+      resolve(answer.toLowerCase() === 'y');
+    });
+  });
+
+  if (useProxy) {
+    await waitForAnyKey('\nNOTE: Using proxy may cause Cloudflare issues.\nIf you encounter errors, consider switching to Direct Mode (no proxy).\n');
+  }
+
+  rl.close();
+
   const spinner = ora('Reading input files...').start();
-  const { tokens, proxies } = await readInputFiles();
+  const { tokens, proxies } = await readInputFiles(useProxy);
   spinner.succeed(`Loaded ${tokens.length} tokens and ${proxies.length} proxies`);
+
   const accounts = tokens.map((token, index) => ({
     token,
     proxyConfig: proxies[index % proxies.length] || null,
@@ -284,12 +317,11 @@ const main = async () => {
       const account = accounts[i];
 
       try {
-
         // Get user profile if not already fetched
         if (!account.username || !account.email) {
           const profile = await getUserProfile(account.token, account.proxyConfig);
-           account.username = profile.username;
-           account.email = profile.email;
+          account.username = profile.username;
+          account.email = profile.email;
         }
 
         // Ping server
@@ -299,7 +331,6 @@ const main = async () => {
         // Get stats
         const stats = await getStats(account.token, account.proxyConfig);
 
-
         // Update account data
         account.pointsToday = stats.pointsToday;
         account.totalPoints = stats.totalPoints;
@@ -307,7 +338,6 @@ const main = async () => {
 
         logSuccess(
           i + 1,
-
           `Ping successful (${account.proxyConfig ? account.proxyConfig.type : 'Direct'})`,
           stats.pointsToday,
           stats.totalPoints,
@@ -320,11 +350,12 @@ const main = async () => {
         account.lastUpdate = getTimestamp();
         console.log(chalk.red(`[${getTimestamp()}] Account ${i + 1}: Error - ${error.message}`));
       }
+
       // Add small delay between accounts to prevent rate limiting
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
-
-        // Wait before next update (30 seconds)
+    
+    // Wait before next update (30 seconds)
     await new Promise(resolve => setTimeout(resolve, 30000));
   }
 };
