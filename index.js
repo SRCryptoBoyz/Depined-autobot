@@ -11,7 +11,7 @@ import readline from 'readline';
 const BASE_URL = 'https://api.depined.org/api';
 
 const displayBanner = () => {
-  console.log(chalk.green(figlet.textSync('AirdropInsiders', { horizontalLayout: 'default' })));
+  console.log(chalk.green(figlet.textSync('C-BOYZ', { horizontalLayout: 'default' })));
 };
 
 // Format timestamps
