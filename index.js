@@ -10,9 +10,6 @@ import readline from 'readline';
 
 const BASE_URL = 'https://api.depined.org/api';
 
-const chalk = require('chalk');
-const figlet = require('figlet');
-
 const displayBanner = () => {
   console.log(
     chalk.magenta(
@@ -37,7 +34,6 @@ const displayBanner = () => {
 };
 
 displayBanner();
-
 
 // Format timestamps
 const getTimestamp = () => {
