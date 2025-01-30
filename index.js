@@ -11,7 +11,7 @@ import readline from 'readline';
 const BASE_URL = 'https://api.depined.org/api';
 
 const displayBanner = () => {
-  console.log(chalk.green(figlet.textSync('C-BOYZ', { horizontalLayout: 'default' })));
+  console.log(chalk.magenta(figlet.textSync('C-BOYZ', { horizontalLayout: 'default' })));
 };
 
 // Format timestamps
@@ -295,8 +295,8 @@ const main = async () => {
   while (true) {
     console.clear();
     displayBanner(); // Tampilkan banner sebelum setiap refresh tabel
-    console.log(chalk.yellow('Join Us : https://t.me/PoppetAirdrops\n'));
-    console.log(chalk.cyan('=== DEPINED AUTO-BOT ===\n'));
+    console.log(chalk.yellow('JOIN HERE : https://t.me/PoppetAirdrops\n'));
+    console.log(chalk.cyan('=== DPINED-AUTOBOT ===\n'));
     console.log(createStatsTable(accounts).toString());
     console.log(chalk.cyan('\n=== Activity Log ==='));
 
